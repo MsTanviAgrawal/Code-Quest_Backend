@@ -1,5 +1,7 @@
 import mongoose from "mongoose"
 import users from '../models/auth.js'
+import jwt from 'jsonwebtoken';
+import bcrypt from 'bcryptjs';
 
 export const getallusers = async (req, res) => {
     try {
@@ -35,3 +37,32 @@ export const updateprofile=async(req,res)=>{
         return
     }
 }
+
+export const googleLogin = async (req, res) => {
+    const { email, name, googleId, token } = req.body;
+
+    try {
+        let existingUser = await users.findOne({ email });
+
+        if (!existingUser) {
+            existingUser = await users.create({
+                name,
+                email,
+                googleId,
+                password: '', // No password needed for Google users
+                joinedon: new Date()
+            });
+        }
+
+        const jwtToken = jwt.sign(
+            { email: existingUser.email, id: existingUser._id },
+            process.env.JWT_SECRET,
+            { expiresIn: '1h' }
+        );
+
+        res.status(200).json({ result: existingUser, token: jwtToken });
+    } catch (error) {
+        console.log('Google Login Error:', error.message);
+        res.status(500).json({ message: "Google login failed" });
+    }
+};

@@ -6,6 +6,8 @@ import userRoutes from "./routes/user.js"
 import questionroutes from "./routes/question.js"
 import answerroutes from "./routes/answer.js"
 
+export const googleLogin = (authData) => API.post('/user/google-login', authData);
+
 const app = express();
 dotenv.config();
 app.use(express.json({ limit: "30mb", extended: true }))
