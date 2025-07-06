@@ -76,14 +76,21 @@ dotenv.config();
 const app = express();
 const server = http.createServer(app); // ⬅️ Create HTTP server from Express app
 
-// SOCKET.IO setup
+// CORS setup for Express
+app.use(cors({
+  origin: ["http://localhost:5173", "https://codequest93.netlify.app"],
+  methods: ["GET", "POST", "PATCH", "DELETE"],
+  credentials: true
+}));
+
+// CORS setup for socket.io
 const io = new Server(server, {
   cors: {
-    origin: "https://codequest93.netlify.app", // or "*" during testing
-    methods: ["GET", "POST", "PATCH"],
-    credentials: true,
+    origin: ["http://localhost:5173", "https://codequest93.netlify.app"],
+    methods: ["GET", "POST"]
   }
 });
+
 
 io.on("connection", (socket) => {
   console.log("✅ User connected:", socket.id);
@@ -103,7 +110,7 @@ app.use(express.json({ limit: "30mb", extended: true }));
 app.use(express.urlencoded({ limit: "30mb", extended: true }));
 
 app.use(cors({
-  origin: "https://codequest93.netlify.app",
+  origin: ["http://localhost:5173","https://codequest93.netlify.app"],
   methods: ["GET", "POST", "PATCH"],
   credentials: true,
 }));
