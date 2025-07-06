@@ -3,6 +3,7 @@ import mongoose from "mongoose";
     name:{type:String,required:true},
     email:{type:String,required:true},
     password:{type:String,required:true},
+    googleId: { type: String },
     about:{type:String},
     tags:{type:[String]},
     joinedon:{type:Date,default:Date.now}
