@@ -44,6 +44,9 @@ import dotenv from "dotenv";
 import userRoutes from "./routes/user.js";
 import questionroutes from "./routes/question.js";
 import answerroutes from "./routes/answer.js";
+import subscriptionRoutes from "./routes/subscription.js";
+import publicPostsRoutes from "./routes/publicPosts.js";
+import friendsRoutes from "./routes/friends.js";
 
 dotenv.config();
 
@@ -69,9 +72,15 @@ app.use(cors({
 app.use(express.json({ limit: "30mb", extended: true }));
 app.use(express.urlencoded({ limit: "30mb", extended: true }));
 
+// Serve static files for uploaded videos
+app.use('/uploads', express.static('uploads'));
+
 app.use("/user", userRoutes);
 app.use("/questions", questionroutes);
 app.use("/answer", answerroutes);
+app.use("/subscription", subscriptionRoutes);
+app.use("/public-posts", publicPostsRoutes);
+app.use("/friends", friendsRoutes);
 
 app.get("/", (req, res) => {
   res.send("Codequest is running perfect");

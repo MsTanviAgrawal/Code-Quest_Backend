@@ -2,6 +2,8 @@ import mongoose from "mongoose"
 import users from '../models/auth.js'
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
+import LoginHistory from '../models/LoginHistory.js';
+import { parseUserAgent, getIpAddress, isMobileAccessAllowed } from '../utils/deviceDetection.js';
 
 export const getallusers = async (req, res) => {
     try {
@@ -43,6 +45,18 @@ export const googleLogin = async (req, res) => {
     const { email, name, token, googleId } = req.body;
 
     try {
+        // Get device information
+        const userAgent = req.headers['user-agent'] || '';
+        const { browser, os, deviceType } = parseUserAgent(userAgent);
+        const ipAddress = getIpAddress(req);
+
+        // Check mobile time restriction
+        if (deviceType === 'mobile' && !isMobileAccessAllowed()) {
+            return res.status(403).json({ 
+                message: "Mobile access is only allowed between 10 AM to 1 PM" 
+            });
+        }
+
         let existingUser = await users.findOne({ email });
 
         if (!existingUser) {
@@ -51,24 +65,35 @@ export const googleLogin = async (req, res) => {
                 name,
                 email,
                 googleId,
-                // password: googleId,
                 password: hashedPassword,
                 joinedon: new Date()
             });
         }
 
-            const jwtToken = jwt.sign(
-                { email: existingUser.email, id: existingUser._id },
-                process.env.JWT_SECRET,
-                { expiresIn: '1h' }
-            );
-            res.status(200).json({ result: existingUser, token: jwtToken });
+        const jwtToken = jwt.sign(
+            { email: existingUser.email, id: existingUser._id },
+            process.env.JWT_SECRET,
+            { expiresIn: '7d' }
+        );
 
-        } catch (error) {
-        // console.log('Google Login Error:', error.message);
+        // Log Google login history
+        await LoginHistory.create({
+            userId: existingUser._id,
+            email: existingUser.email,
+            browser,
+            os,
+            deviceType,
+            ipAddress,
+            loginMethod: 'google',
+            requireOtp: false,
+            success: true
+        });
 
+        console.log(`✅ Google login successful for ${email}`);
+        res.status(200).json({ result: existingUser, token: jwtToken });
+
+    } catch (error) {
         console.error('Google Login Error:', error);
-
         res.status(500).json({ message: "Google login failed" });
     }
 };
